@@ -40,14 +40,14 @@ const SPOTS_TOTAL = 10;
 const SPOTS_REMAINING = 7;
 
 /* ──────────────── waitlist form ──────────────── */
-function CreatorForm() {
+function CreatorForm({ source = 'creator' }) {
   const [email, setEmail] = useState('');
   const { submit, status, error } = useWaitlist();
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!email) return;
-    await submit(email, 'creator');
+    await submit(email, source);
   }
 
   if (status === 'success') {
@@ -208,7 +208,7 @@ export default function CreatorLanding() {
 
         <FadeIn delay={0.22}>
           <div id="apply">
-            <CreatorForm />
+            <CreatorForm source="creator" />
           </div>
         </FadeIn>
 
@@ -380,7 +380,7 @@ export default function CreatorLanding() {
             Don't miss the founding<br />
             creator rate<span style={{ color: ACCENT }}>.</span>
           </h2>
-          <CreatorForm />
+          <CreatorForm source="creator" />
           <p style={sx.ctaSmall}>No contracts. No exclusivity. Cancel anytime.</p>
         </FadeIn>
       </section>
