@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWaitlist } from '../hooks/useWaitlist';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 /* ─────────────────── helpers ─────────────────── */
 function useOnScreen(ref, threshold = 0.15) {
@@ -249,6 +250,7 @@ function RevenueCalculator() {
 /* ═══════════════════════ PAGE ═══════════════════════ */
 export default function CreatorLanding() {
   const [scrollY, setScrollY] = useState(0);
+  const { trackSection, trackClick } = useAnalytics('creator');
 
   useEffect(() => {
     const handler = () => setScrollY(window.scrollY);
@@ -278,16 +280,16 @@ export default function CreatorLanding() {
         <span style={sx.logo}>plana <span style={sx.logoTag}>creators</span></span>
         <div style={sx.navLinks}>
           {showStickyCta && (
-            <a href="#apply" style={sx.navCta}>Join Waitlist</a>
+            <a href="#apply" style={sx.navCta} onClick={() => trackClick('nav-join-waitlist')}>Join Waitlist</a>
           )}
           {!showStickyCta && (
-            <a href="#apply" style={sx.navCta}>Apply Now</a>
+            <a href="#apply" style={sx.navCta} onClick={() => trackClick('nav-apply-now')}>Apply Now</a>
           )}
         </div>
       </nav>
 
       {/* ─── HERO ─── */}
-      <section style={sx.hero}>
+      <section ref={trackSection('hero')} style={sx.hero}>
         <FadeIn>
           <div style={sx.spotsBadge}>
             <span style={sx.spotsDot} />
@@ -354,7 +356,7 @@ export default function CreatorLanding() {
       </section>
 
       {/* ─── FEE COMPARISON ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('fee-comparison')} style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>The numbers</p>
           <h2 style={sx.sectionH2}>The math is simple.</h2>
@@ -380,7 +382,7 @@ export default function CreatorLanding() {
       </section>
 
       {/* ─── THREE PLAN TYPES ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('plan-types')} style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>Revenue streams</p>
           <h2 style={sx.sectionH2}>Three ways to scale your revenue</h2>
@@ -412,7 +414,7 @@ export default function CreatorLanding() {
       </section>
 
       {/* ─── SMART FEATURES ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('platform-features')} style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>Platform features</p>
           <h2 style={sx.sectionH2}>We handle the boring parts.</h2>
@@ -453,14 +455,14 @@ export default function CreatorLanding() {
       </section>
 
       {/* ─── REVENUE CALCULATOR ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('revenue-calculator')} style={sx.section}>
         <FadeIn>
           <RevenueCalculator />
         </FadeIn>
       </section>
 
       {/* ─── FOUNDING CREATOR PERKS ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('founding-perks')} style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>Founding 50</p>
           <h2 style={sx.sectionH2}>Why join now?</h2>
@@ -468,7 +470,7 @@ export default function CreatorLanding() {
 
         <div style={sx.perksWrap}>
           <PerkItem delay={0.05}>
-            <strong style={{ color: '#fff' }}>0% platform fee locked in forever.</strong>{' '}
+            <strong style={{ color: '#fff' }}>10% platform fee locked in forever.</strong>{' '}
             Standard pricing will go higher. Founding 50 creators keep their 10% rate no matter what.
           </PerkItem>
           <PerkItem delay={0.1}>
@@ -487,7 +489,7 @@ export default function CreatorLanding() {
       </section>
 
       {/* ─── CTA FOOTER ─── */}
-      <section style={sx.ctaSection}>
+      <section ref={trackSection('cta-footer')} style={sx.ctaSection}>
         <FadeIn>
           <div style={sx.ctaSpotsBadge}>
             <span style={sx.spotsDot} />

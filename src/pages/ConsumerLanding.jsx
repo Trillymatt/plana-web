@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWaitlist } from '../hooks/useWaitlist';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 /* ───────────────────── tiny helpers ───────────────────── */
 function useOnScreen(ref, threshold = 0.15) {
@@ -298,6 +299,7 @@ function FlowArrow() {
 /* ═══════════════════════ PAGE ═══════════════════════ */
 export default function ConsumerLanding() {
   const [scrollY, setScrollY] = useState(0);
+  const { trackSection, trackClick } = useAnalytics('consumer');
 
   useEffect(() => {
     const handler = () => setScrollY(window.scrollY);
@@ -320,13 +322,13 @@ export default function ConsumerLanding() {
         <div style={sx.navLinks}>
           <a href="#how" style={sx.navLink}>How it works</a>
           {showStickyCta && (
-            <a href="#waitlist" style={sx.navCta}>Join Waitlist</a>
+            <a href="#waitlist" style={sx.navCta} onClick={() => trackClick('nav-join-waitlist')}>Join Waitlist</a>
           )}
         </div>
       </nav>
 
       {/* ─── HERO ─── */}
-      <section style={sx.hero}>
+      <section ref={trackSection('hero')} style={sx.hero}>
         <div style={sx.heroBadge}>
           <span style={sx.heroBadgeDot} />
           Coming soon
@@ -373,7 +375,7 @@ export default function ConsumerLanding() {
       </section>
 
       {/* ─── BROWSE CREATORS ─── */}
-      <section id="how" style={sx.section}>
+      <section id="how" ref={trackSection('browse-creators')} style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>Step 1</p>
           <h2 style={sx.sectionH2}>Find a creator you already trust</h2>
@@ -391,7 +393,7 @@ export default function ConsumerLanding() {
       </section>
 
       {/* ─── BUY A PLAN ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('buy-a-plan')} style={sx.section}>
         <div style={sx.splitRow} className="plana-split">
           <div style={sx.splitText}>
             <FadeIn>
@@ -425,7 +427,7 @@ export default function ConsumerLanding() {
       </div>
 
       {/* ─── GROCERY LIST ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('grocery-list')} style={sx.section}>
         <div style={sx.splitRowReverse} className="plana-split-reverse">
           <div style={sx.splitCard}>
             <FadeIn delay={0.1}>
@@ -457,7 +459,7 @@ export default function ConsumerLanding() {
       <FlowArrow />
 
       {/* ─── CALENDAR SYNC ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('calendar-sync')} style={sx.section}>
         <div style={sx.splitRow} className="plana-split">
           <div style={sx.splitText}>
             <FadeIn>
@@ -497,7 +499,7 @@ export default function ConsumerLanding() {
       </section>
 
       {/* ─── CUSTOM PLANS ─── */}
-      <section style={sx.section}>
+      <section ref={trackSection('custom-plans')} style={sx.section}>
         <FadeIn>
           <div style={sx.customBlock}>
             <p style={sx.sectionLabel}>Coming soon</p>
@@ -525,7 +527,7 @@ export default function ConsumerLanding() {
       </section>
 
       {/* ─── CTA FOOTER ─── */}
-      <section style={sx.ctaSection}>
+      <section ref={trackSection('cta-footer')} style={sx.ctaSection}>
         <FadeIn>
           <h2 style={sx.ctaH2}>
             Stop screenshotting plans<br />
