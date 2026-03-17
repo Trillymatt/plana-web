@@ -35,10 +35,10 @@ function FadeIn({ children, delay = 0, style = {} }) {
   );
 }
 
-/* ──────────────── waitlist form (shared) ──────────────── */
+/* ──────────────── waitlist form ──────────────── */
 function WaitlistForm({ source, centered = true }) {
   const [email, setEmail] = useState('');
-  const { submit, status, error } = useWaitlist();
+  const { submit, status, error, referralCode } = useWaitlist();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,11 +46,38 @@ function WaitlistForm({ source, centered = true }) {
     await submit(email, source);
   }
 
+  const [copied, setCopied] = useState(false);
+
+  function copyReferral() {
+    const url = `${window.location.origin}?ref=${referralCode}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   if (status === 'success') {
+    const referralUrl = `${window.location.origin}?ref=${referralCode}`;
     return (
       <div style={{ ...sx.successWrap, ...(centered ? { margin: '0 auto' } : {}) }}>
-        <span style={sx.successCheck}>&#10003;</span>
-        <p style={sx.successText}>You're on the list. We'll email you before launch day.</p>
+        <div style={sx.successTop}>
+          <span style={sx.successCheck}>&#10003;</span>
+          <p style={sx.successText}>You're on the list! We'll email you before launch day.</p>
+        </div>
+        <div style={sx.referralBlock}>
+          <p style={sx.referralLabel}>Share your link to move up the waitlist:</p>
+          <div style={sx.referralRow}>
+            <input
+              readOnly
+              value={referralUrl}
+              style={sx.referralInput}
+              onClick={(e) => e.target.select()}
+            />
+            <button onClick={copyReferral} style={sx.referralBtn}>
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -60,14 +87,14 @@ function WaitlistForm({ source, centered = true }) {
       <div style={sx.inputWrap}>
         <input
           type="email"
-          placeholder="you@email.com"
+          placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           disabled={status === 'loading'}
           style={sx.input}
-          onFocus={(e) => { e.target.parentElement.style.borderColor = 'rgba(0,255,135,.4)'; }}
-          onBlur={(e) => { e.target.parentElement.style.borderColor = 'rgba(255,255,255,.06)'; }}
+          onFocus={(e) => { e.target.parentElement.style.borderColor = 'rgba(0,122,255,.5)'; }}
+          onBlur={(e) => { e.target.parentElement.style.borderColor = 'rgba(255,255,255,.08)'; }}
         />
         <button type="submit" disabled={status === 'loading'} style={sx.btn}>
           {status === 'loading' ? 'Joining\u2026' : 'Join the Waitlist'}
@@ -75,6 +102,41 @@ function WaitlistForm({ source, centered = true }) {
       </div>
       {status === 'error' && <p style={sx.errorText}>{error}</p>}
     </form>
+  );
+}
+
+/* ──────────────── social proof ──────────────── */
+function SocialProof() {
+  return (
+    <div style={sx.socialProof}>
+      <div style={sx.socialAvatars}>
+        {['#007AFF', '#FF5733', '#CCFF00', '#00BCD4', '#FF9500'].map((c, i) => (
+          <div key={i} style={{ ...sx.socialAvatar, background: c, zIndex: 5 - i, marginLeft: i > 0 ? -8 : 0 }} />
+        ))}
+      </div>
+      <span style={sx.socialText}>Join <strong style={{ color: '#fff' }}>1,200+</strong> athletes on the priority list</span>
+    </div>
+  );
+}
+
+/* ──────────────── FOMO progress bar ──────────────── */
+function FomoBar() {
+  const ref = useRef(null);
+  const visible = useOnScreen(ref, 0.5);
+  return (
+    <div ref={ref} style={sx.fomoWrap}>
+      <div style={sx.fomoTop}>
+        <span style={sx.fomoLabel}>Beta Access</span>
+        <span style={sx.fomoPct}>85% Full</span>
+      </div>
+      <div style={sx.fomoTrack}>
+        <div style={{
+          ...sx.fomoFill,
+          width: visible ? '85%' : '0%',
+        }} />
+      </div>
+      <p style={sx.fomoSub}>Limited spots remaining — early users get priority access</p>
+    </div>
   );
 }
 
@@ -109,14 +171,14 @@ function CreatorCard({ creator, delay }) {
   );
 }
 
-/* ──────────────── plan card (what you get) ──────────────── */
+/* ──────────────── plan card ──────────────── */
 function PlanCard({ delay }) {
   return (
     <FadeIn delay={delay}>
       <div style={sx.planCard}>
         <div style={sx.planBadgeRow}>
           <span style={sx.planBadge}>Meal Plan</span>
-          <span style={{ ...sx.planBadge, background: 'rgba(99,135,255,.1)', color: '#6387FF', borderColor: 'rgba(99,135,255,.2)' }}>Workout Plan</span>
+          <span style={{ ...sx.planBadge, background: 'rgba(0,122,255,.1)', color: CTA, borderColor: 'rgba(0,122,255,.2)' }}>Workout Plan</span>
         </div>
         <p style={sx.planTitle}>12-Week Lean Bulk</p>
         <p style={sx.planCreator}>by Sarah Chen</p>
@@ -167,15 +229,15 @@ function GroceryList() {
                   ...sx.groceryItem,
                   textDecoration: done ? 'line-through' : 'none',
                   opacity: done ? 0.4 : 1,
-                  borderColor: done ? 'rgba(0,255,135,.25)' : 'rgba(255,255,255,.06)',
+                  borderColor: done ? 'rgba(204,255,0,.25)' : 'rgba(255,255,255,.08)',
                 }}
               >
                 <span style={{
                   ...sx.groceryCheck,
-                  background: done ? '#00FF87' : 'transparent',
-                  borderColor: done ? '#00FF87' : 'rgba(255,255,255,.25)',
+                  background: done ? SUCCESS : 'transparent',
+                  borderColor: done ? SUCCESS : 'rgba(255,255,255,.25)',
                 }}>
-                  {done && <span style={{ color: '#0A0A0A', fontSize: 11, lineHeight: 1 }}>&#10003;</span>}
+                  {done && <span style={{ color: '#121212', fontSize: 11, lineHeight: 1 }}>&#10003;</span>}
                 </span>
                 {item}
               </button>
@@ -205,7 +267,7 @@ function CalendarMock() {
       {calendarDays.map((d) => {
         const slot = workoutSlots[d];
         return (
-          <div key={d} style={{ ...sx.calDay, borderColor: slot ? 'rgba(0,255,135,.3)' : 'rgba(255,255,255,.06)' }}>
+          <div key={d} style={{ ...sx.calDay, borderColor: slot ? 'rgba(0,122,255,.3)' : 'rgba(255,255,255,.08)' }}>
             <span style={sx.calDayLabel}>{d}</span>
             {slot ? (
               <>
@@ -243,19 +305,23 @@ export default function ConsumerLanding() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
+  const showStickyCta = scrollY > 600;
+
   return (
     <div style={sx.page}>
-      {/* ─── nav bar ─── */}
+      {/* ─── nav bar (sticky header) ─── */}
       <nav style={{
         ...sx.nav,
         backdropFilter: scrollY > 40 ? 'blur(16px)' : 'none',
-        background: scrollY > 40 ? 'rgba(10,10,10,.85)' : 'transparent',
-        borderBottom: scrollY > 40 ? '1px solid rgba(255,255,255,.06)' : '1px solid transparent',
+        background: scrollY > 40 ? 'rgba(18,18,18,.9)' : 'transparent',
+        borderBottom: scrollY > 40 ? '1px solid rgba(255,255,255,.08)' : '1px solid transparent',
       }}>
         <span style={sx.logo}>plana</span>
         <div style={sx.navLinks}>
           <a href="#how" style={sx.navLink}>How it works</a>
-          <a href="#waitlist" style={sx.navCta}>Get Early Access</a>
+          {showStickyCta && (
+            <a href="#waitlist" style={sx.navCta}>Join Waitlist</a>
+          )}
         </div>
       </nav>
 
@@ -268,17 +334,17 @@ export default function ConsumerLanding() {
 
         <FadeIn>
           <h1 style={sx.heroH1}>
-            Buy plans from creators you trust.
+            Your Personal Trainer,
             <br />
-            <span style={sx.heroAccent}>We handle the rest.</span>
+            <span style={sx.heroAccent}>Powered by AI.</span>
           </h1>
         </FadeIn>
 
         <FadeIn delay={0.12}>
           <p style={sx.heroSub}>
-            Your favourite fitness creators sell meal plans and workout programmes on Plana.
-            When you buy one, it auto-generates your grocery list and syncs
-            every session to your calendar. No more screenshots. No more spreadsheets.
+            Buy expert meal plans and workout programmes from real fitness creators.
+            Plana auto-generates your grocery list, syncs every session to your
+            calendar, and keeps you on track — no screenshots, no spreadsheets.
           </p>
         </FadeIn>
 
@@ -286,6 +352,14 @@ export default function ConsumerLanding() {
           <div id="waitlist">
             <WaitlistForm source="consumer" />
           </div>
+        </FadeIn>
+
+        <FadeIn delay={0.32}>
+          <SocialProof />
+        </FadeIn>
+
+        <FadeIn delay={0.4}>
+          <FomoBar />
         </FadeIn>
 
         {/* scrolling marquee */}
@@ -318,7 +392,7 @@ export default function ConsumerLanding() {
 
       {/* ─── BUY A PLAN ─── */}
       <section style={sx.section}>
-        <div style={sx.splitRow}>
+        <div style={sx.splitRow} className="plana-split">
           <div style={sx.splitText}>
             <FadeIn>
               <p style={sx.sectionLabel}>Step 2</p>
@@ -340,7 +414,7 @@ export default function ConsumerLanding() {
         </div>
       </section>
 
-      {/* ─── DIVIDER: "You buy it. We unpack it." ─── */}
+      {/* ─── DIVIDER ─── */}
       <div style={sx.bigDivider}>
         <FadeIn>
           <p style={sx.bigDividerText}>
@@ -352,7 +426,7 @@ export default function ConsumerLanding() {
 
       {/* ─── GROCERY LIST ─── */}
       <section style={sx.section}>
-        <div style={sx.splitRowReverse}>
+        <div style={sx.splitRowReverse} className="plana-split-reverse">
           <div style={sx.splitCard}>
             <FadeIn delay={0.1}>
               <div style={sx.mockCard}>
@@ -384,7 +458,7 @@ export default function ConsumerLanding() {
 
       {/* ─── CALENDAR SYNC ─── */}
       <section style={sx.section}>
-        <div style={sx.splitRow}>
+        <div style={sx.splitRow} className="plana-split">
           <div style={sx.splitText}>
             <FadeIn>
               <p style={sx.sectionLabel}>Auto-synced</p>
@@ -400,7 +474,7 @@ export default function ConsumerLanding() {
                   Google Calendar
                 </span>
                 <span style={sx.calBadge}>
-                  <span style={{ ...sx.calBadgeIcon, background: 'rgba(255,255,255,.1)' }}>A</span>
+                  <span style={{ ...sx.calBadgeIcon, background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.6)' }}>A</span>
                   Apple Calendar
                 </span>
               </div>
@@ -455,7 +529,7 @@ export default function ConsumerLanding() {
         <FadeIn>
           <h2 style={sx.ctaH2}>
             Stop screenshotting plans<br />
-            you'll never follow<span style={{ color: '#00FF87' }}>.</span>
+            you'll never follow<span style={{ color: CTA }}>.</span>
           </h2>
           <p style={sx.ctaSub}>
             Get early access to Plana — the marketplace where buying a plan
@@ -482,6 +556,10 @@ export default function ConsumerLanding() {
           0%, 100% { opacity: 1; }
           50%      { opacity: .4; }
         }
+        @keyframes plana-fomo-glow {
+          0%, 100% { box-shadow: 0 0 8px rgba(0,122,255,.3); }
+          50%      { box-shadow: 0 0 16px rgba(0,122,255,.5); }
+        }
         input::placeholder { color: rgba(255,255,255,.3); }
         html { scroll-padding-top: 80px; }
         @media (max-width: 768px) {
@@ -494,10 +572,11 @@ export default function ConsumerLanding() {
 }
 
 /* ═══════════════════════ STYLES ═══════════════════════ */
-const ACCENT = '#00FF87';
-const BG = '#0A0A0A';
-const CARD_BG = '#111111';
-const BORDER = 'rgba(255,255,255,.06)';
+const CTA = '#007AFF';
+const SUCCESS = '#CCFF00';
+const BG = '#121212';
+const CARD_BG = '#1A1A1A';
+const BORDER = 'rgba(255,255,255,.08)';
 const MAX_W = 1120;
 
 const sx = {
@@ -541,11 +620,12 @@ const sx = {
   navCta: {
     fontSize: 14,
     fontWeight: 600,
-    color: BG,
-    background: ACCENT,
+    color: '#fff',
+    background: CTA,
     padding: '8px 20px',
     borderRadius: 99,
     textDecoration: 'none',
+    animation: 'plana-fomo-glow 2s ease-in-out infinite',
   },
 
   /* ── hero ── */
@@ -564,9 +644,9 @@ const sx = {
     gap: 8,
     fontSize: 13,
     fontWeight: 600,
-    color: ACCENT,
-    background: 'rgba(0,255,135,.06)',
-    border: '1px solid rgba(0,255,135,.15)',
+    color: CTA,
+    background: 'rgba(0,122,255,.08)',
+    border: '1px solid rgba(0,122,255,.2)',
     borderRadius: 99,
     padding: '6px 16px',
     marginBottom: 32,
@@ -576,7 +656,7 @@ const sx = {
     width: 7,
     height: 7,
     borderRadius: '50%',
-    background: ACCENT,
+    background: CTA,
     display: 'inline-block',
     animation: 'plana-pulse 2s ease-in-out infinite',
   },
@@ -589,14 +669,83 @@ const sx = {
     maxWidth: 780,
   },
   heroAccent: {
-    color: ACCENT,
+    color: CTA,
   },
   heroSub: {
     fontSize: 'clamp(15px, 2vw, 18px)',
     color: 'rgba(255,255,255,.5)',
-    maxWidth: 540,
+    maxWidth: 560,
     margin: '0 0 40px',
     lineHeight: 1.7,
+  },
+
+  /* ── social proof ── */
+  socialProof: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 28,
+  },
+  socialAvatars: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  socialAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    border: '2px solid #121212',
+  },
+  socialText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,.5)',
+  },
+
+  /* ── FOMO bar ── */
+  fomoWrap: {
+    marginTop: 28,
+    width: '100%',
+    maxWidth: 420,
+    background: CARD_BG,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 14,
+    padding: '18px 22px',
+  },
+  fomoTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  fomoLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,.5)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+  },
+  fomoPct: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: CTA,
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+  fomoTrack: {
+    height: 8,
+    borderRadius: 4,
+    background: 'rgba(255,255,255,.06)',
+    overflow: 'hidden',
+  },
+  fomoFill: {
+    height: '100%',
+    borderRadius: 4,
+    background: `linear-gradient(90deg, ${CTA}, rgba(0,122,255,.6))`,
+    transition: 'width 1.5s cubic-bezier(.16,1,.3,1)',
+  },
+  fomoSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,.3)',
+    marginTop: 8,
   },
 
   /* ── marquee ── */
@@ -637,7 +786,7 @@ const sx = {
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.12em',
-    color: ACCENT,
+    color: CTA,
     marginBottom: 12,
   },
   sectionH2: {
@@ -678,14 +827,14 @@ const sx = {
     width: 44,
     height: 44,
     borderRadius: 12,
-    background: 'linear-gradient(135deg, rgba(0,255,135,.2), rgba(0,255,135,.05))',
-    border: '1px solid rgba(0,255,135,.15)',
+    background: 'linear-gradient(135deg, rgba(0,122,255,.2), rgba(0,122,255,.05))',
+    border: '1px solid rgba(0,122,255,.2)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 15,
     fontWeight: 700,
-    color: ACCENT,
+    color: CTA,
     flexShrink: 0,
   },
   creatorName: {
@@ -703,9 +852,9 @@ const sx = {
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    color: ACCENT,
-    background: 'rgba(0,255,135,.08)',
-    border: '1px solid rgba(0,255,135,.12)',
+    color: CTA,
+    background: 'rgba(0,122,255,.1)',
+    border: '1px solid rgba(0,122,255,.15)',
     borderRadius: 99,
     padding: '3px 10px',
     alignSelf: 'flex-start',
@@ -750,9 +899,9 @@ const sx = {
     letterSpacing: '0.04em',
     padding: '4px 10px',
     borderRadius: 6,
-    background: 'rgba(0,255,135,.08)',
-    color: ACCENT,
-    border: '1px solid rgba(0,255,135,.15)',
+    background: 'rgba(204,255,0,.08)',
+    color: SUCCESS,
+    border: '1px solid rgba(204,255,0,.2)',
   },
   planTitle: {
     fontSize: 22,
@@ -792,7 +941,7 @@ const sx = {
     color: 'rgba(255,255,255,.7)',
   },
   planCheckmark: {
-    color: ACCENT,
+    color: SUCCESS,
     fontSize: 13,
     fontWeight: 700,
   },
@@ -911,7 +1060,7 @@ const sx = {
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
-    color: ACCENT,
+    color: CTA,
     marginBottom: 4,
   },
   groceryItem: {
@@ -970,7 +1119,7 @@ const sx = {
   calWorkout: {
     fontSize: 'clamp(10px, 1.3vw, 13px)',
     fontWeight: 600,
-    color: ACCENT,
+    color: CTA,
     textAlign: 'center',
     marginTop: 'auto',
   },
@@ -1005,13 +1154,13 @@ const sx = {
     width: 24,
     height: 24,
     borderRadius: 6,
-    background: 'rgba(66,133,244,.15)',
+    background: 'rgba(0,122,255,.15)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 13,
     fontWeight: 700,
-    color: '#4285F4',
+    color: CTA,
   },
 
   /* ── custom plans ── */
@@ -1038,14 +1187,14 @@ const sx = {
     width: 28,
     height: 28,
     borderRadius: '50%',
-    background: 'rgba(0,255,135,.1)',
-    border: '1px solid rgba(0,255,135,.2)',
+    background: 'rgba(0,122,255,.1)',
+    border: '1px solid rgba(0,122,255,.2)',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: 13,
     fontWeight: 700,
-    color: ACCENT,
+    color: CTA,
   },
   quizText: {
     fontSize: 15,
@@ -1070,14 +1219,14 @@ const sx = {
   flowLine: {
     flex: 1,
     height: 1,
-    background: 'rgba(0,255,135,.2)',
+    background: 'rgba(0,122,255,.2)',
   },
   flowLabel: {
     fontSize: 12,
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
-    color: 'rgba(0,255,135,.4)',
+    color: 'rgba(0,122,255,.4)',
   },
 
   /* ── form ── */
@@ -1107,8 +1256,8 @@ const sx = {
     minWidth: 0,
   },
   btn: {
-    background: ACCENT,
-    color: BG,
+    background: CTA,
+    color: '#fff',
     border: 'none',
     borderRadius: 10,
     padding: '14px 24px',
@@ -1125,22 +1274,27 @@ const sx = {
     fontSize: 13,
     marginTop: 10,
   },
+
+  /* ── success + referral ── */
   successWrap: {
+    background: 'rgba(204,255,0,.04)',
+    border: '1px solid rgba(204,255,0,.2)',
+    borderRadius: 16,
+    padding: '24px 28px',
+    maxWidth: 480,
+  },
+  successTop: {
     display: 'flex',
     alignItems: 'center',
     gap: 12,
-    background: 'rgba(0,255,135,.06)',
-    border: '1px solid rgba(0,255,135,.2)',
-    borderRadius: 12,
-    padding: '16px 24px',
-    maxWidth: 480,
+    marginBottom: 20,
   },
   successCheck: {
     width: 28,
     height: 28,
     borderRadius: '50%',
-    background: ACCENT,
-    color: BG,
+    background: SUCCESS,
+    color: '#121212',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1149,9 +1303,50 @@ const sx = {
     flexShrink: 0,
   },
   successText: {
-    color: ACCENT,
+    color: SUCCESS,
     fontSize: 15,
     fontWeight: 600,
+  },
+  referralBlock: {
+    background: 'rgba(255,255,255,.03)',
+    border: `1px solid ${BORDER}`,
+    borderRadius: 10,
+    padding: '14px 16px',
+  },
+  referralLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,.5)',
+    marginBottom: 10,
+  },
+  referralRow: {
+    display: 'flex',
+    gap: 8,
+  },
+  referralInput: {
+    flex: 1,
+    background: 'rgba(255,255,255,.04)',
+    border: `1px solid ${BORDER}`,
+    borderRadius: 8,
+    padding: '10px 12px',
+    color: '#FAFAFA',
+    fontSize: 13,
+    fontFamily: "'JetBrains Mono', monospace",
+    outline: 'none',
+    minWidth: 0,
+  },
+  referralBtn: {
+    background: CTA,
+    color: '#fff',
+    border: 'none',
+    borderRadius: 8,
+    padding: '10px 18px',
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
 
   /* ── cta ── */

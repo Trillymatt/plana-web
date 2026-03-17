@@ -35,19 +35,21 @@ function FadeIn({ children, delay = 0, style = {} }) {
   );
 }
 
-/* ─────────── founding creator counter ─────────── */
-const SPOTS_TOTAL = 10;
-const SPOTS_REMAINING = 7;
+/* ─────────── founding 50 counter ─────────── */
+const SPOTS_TOTAL = 50;
+const SPOTS_CLAIMED = 12;
+const SPOTS_REMAINING = SPOTS_TOTAL - SPOTS_CLAIMED;
 
-/* ──────────────── waitlist form ──────────────── */
+/* ──────────────── creator form (email + social handle) ──────────────── */
 function CreatorForm({ source = 'creator' }) {
   const [email, setEmail] = useState('');
+  const [handle, setHandle] = useState('');
   const { submit, status, error } = useWaitlist();
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!email) return;
-    await submit(email, source);
+    await submit(email, source, handle || null);
   }
 
   if (status === 'success') {
@@ -63,41 +65,55 @@ function CreatorForm({ source = 'creator' }) {
 
   return (
     <form onSubmit={handleSubmit} style={sx.form}>
-      <div style={sx.inputWrap}>
-        <input
-          type="email"
-          placeholder="you@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          disabled={status === 'loading'}
-          style={sx.input}
-          onFocus={(e) => { e.target.parentElement.style.borderColor = 'rgba(0,255,135,.4)'; }}
-          onBlur={(e) => { e.target.parentElement.style.borderColor = BORDER; }}
-        />
-        <button type="submit" disabled={status === 'loading'} style={sx.btn}>
-          {status === 'loading' ? 'Applying\u2026' : 'Apply for Early Access'}
-        </button>
+      <div style={sx.formFields}>
+        <div style={sx.inputWrap}>
+          <input
+            type="email"
+            placeholder="you@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={status === 'loading'}
+            style={sx.input}
+            onFocus={(e) => { e.target.parentElement.style.borderColor = `rgba(0,188,212,.5)`; }}
+            onBlur={(e) => { e.target.parentElement.style.borderColor = BORDER; }}
+          />
+        </div>
+        <div style={sx.inputWrap}>
+          <input
+            type="text"
+            placeholder="@your_handle (Instagram, TikTok, etc.)"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            disabled={status === 'loading'}
+            style={sx.input}
+            onFocus={(e) => { e.target.parentElement.style.borderColor = `rgba(0,188,212,.5)`; }}
+            onBlur={(e) => { e.target.parentElement.style.borderColor = BORDER; }}
+          />
+        </div>
       </div>
+      <button type="submit" disabled={status === 'loading'} style={sx.btn}>
+        {status === 'loading' ? 'Applying\u2026' : 'Apply for Founding 50'}
+      </button>
       {status === 'error' && <p style={sx.errorText}>{error}</p>}
     </form>
   );
 }
 
 /* ──────────── fee comparison bar ──────────── */
-function FeeBar({ platform, earned, fee, keep, accent, bad }) {
+function FeeBar({ platform, earned, fee, keep, bad }) {
   const keepPct = Math.round((keep / earned) * 100);
   const feePct = Math.round((fee / earned) * 100);
   return (
-    <div style={{ ...sx.feeCard, borderColor: bad ? 'rgba(255,80,80,.15)' : 'rgba(0,255,135,.15)' }}>
-      <p style={{ ...sx.feePlatform, color: bad ? '#FF5050' : ACCENT }}>{platform}</p>
+    <div style={{ ...sx.feeCard, borderColor: bad ? 'rgba(255,80,80,.15)' : `rgba(0,188,212,.15)` }}>
+      <p style={{ ...sx.feePlatform, color: bad ? '#FF5050' : CTA }}>{platform}</p>
       <div style={sx.feeBarTrack}>
         <div style={{
           ...sx.feeBarFill,
           width: `${keepPct}%`,
           background: bad
             ? 'linear-gradient(90deg, rgba(255,80,80,.25), rgba(255,80,80,.08))'
-            : 'linear-gradient(90deg, rgba(0,255,135,.3), rgba(0,255,135,.08))',
+            : `linear-gradient(90deg, rgba(0,188,212,.3), rgba(0,188,212,.08))`,
         }} />
       </div>
       <div style={sx.feeNumbers}>
@@ -113,7 +129,7 @@ function FeeBar({ platform, earned, fee, keep, accent, bad }) {
         </div>
         <div style={sx.feeNumBlock}>
           <span style={sx.feeLabel}>You keep</span>
-          <span style={{ ...sx.feeValue, color: bad ? 'rgba(255,255,255,.6)' : ACCENT }}>
+          <span style={{ ...sx.feeValue, color: bad ? 'rgba(255,255,255,.6)' : CTA }}>
             ${keep.toLocaleString()}
           </span>
         </div>
@@ -150,6 +166,86 @@ function PerkItem({ children, delay }) {
   );
 }
 
+/* ──────────── revenue calculator (follower-based) ──────────── */
+function RevenueCalculator() {
+  const [followers, setFollowers] = useState(10000);
+  const [conversionPct, setConversionPct] = useState(2);
+  const [price, setPrice] = useState(30);
+
+  const monthlyBuyers = Math.round(followers * (conversionPct / 100));
+  const grossRevenue = monthlyBuyers * price;
+  const monthlyRevenue = Math.round(grossRevenue * 0.9);
+
+  function formatFollowers(n) {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
+    return n.toString();
+  }
+
+  return (
+    <div style={sx.calcWrap}>
+      <p style={sx.sectionLabel}>Revenue calculator</p>
+      <h2 style={{ ...sx.sectionH2, textAlign: 'center' }}>See your earning potential</h2>
+
+      <div style={sx.calcSliders}>
+        <div style={sx.calcSliderGroup}>
+          <div style={sx.calcSliderLabel}>
+            <span>Follower count</span>
+            <span style={sx.calcSliderValue}>{formatFollowers(followers)}</span>
+          </div>
+          <input
+            type="range"
+            min={1000}
+            max={500000}
+            step={1000}
+            value={followers}
+            onChange={(e) => setFollowers(Number(e.target.value))}
+          />
+        </div>
+        <div style={sx.calcSliderGroup}>
+          <div style={sx.calcSliderLabel}>
+            <span>Conversion rate</span>
+            <span style={sx.calcSliderValue}>{conversionPct}%</span>
+          </div>
+          <input
+            type="range"
+            min={0.5}
+            max={10}
+            step={0.5}
+            value={conversionPct}
+            onChange={(e) => setConversionPct(Number(e.target.value))}
+          />
+        </div>
+        <div style={sx.calcSliderGroup}>
+          <div style={sx.calcSliderLabel}>
+            <span>Plan price</span>
+            <span style={sx.calcSliderValue}>${price}</span>
+          </div>
+          <input
+            type="range"
+            min={10}
+            max={200}
+            step={5}
+            value={price}
+            onChange={(e) => setPrice(Number(e.target.value))}
+          />
+        </div>
+      </div>
+
+      <div style={sx.calcResultBlock}>
+        <span style={sx.calcResultLabel}>Potential Monthly Revenue</span>
+        <span style={sx.calcResultAmount}>
+          ${monthlyRevenue.toLocaleString()}
+          <span style={sx.calcResultPeriod}>/mo</span>
+        </span>
+        <span style={sx.calcResultSub}>
+          {monthlyBuyers.toLocaleString()} buyers &times; ${price} per plan &times; 10% platform fee
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════ PAGE ═══════════════════════ */
 export default function CreatorLanding() {
   const [scrollY, setScrollY] = useState(0);
@@ -160,7 +256,6 @@ export default function CreatorLanding() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  // capture utm_creator for analytics (stored via useWaitlist's utm_source)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const utmCreator = params.get('utm_creator');
@@ -169,19 +264,26 @@ export default function CreatorLanding() {
     }
   }, []);
 
-  const filledSpots = SPOTS_TOTAL - SPOTS_REMAINING;
+  const showStickyCta = scrollY > 600;
 
   return (
     <div style={sx.page}>
-      {/* ─── nav ─── */}
+      {/* ─── nav (sticky header) ─── */}
       <nav style={{
         ...sx.nav,
         backdropFilter: scrollY > 40 ? 'blur(16px)' : 'none',
-        background: scrollY > 40 ? 'rgba(10,10,10,.85)' : 'transparent',
+        background: scrollY > 40 ? 'rgba(10,10,11,.9)' : 'transparent',
         borderBottom: scrollY > 40 ? `1px solid ${BORDER}` : '1px solid transparent',
       }}>
         <span style={sx.logo}>plana <span style={sx.logoTag}>creators</span></span>
-        <a href="#apply" style={sx.navCta}>Apply Now</a>
+        <div style={sx.navLinks}>
+          {showStickyCta && (
+            <a href="#apply" style={sx.navCta}>Join Waitlist</a>
+          )}
+          {!showStickyCta && (
+            <a href="#apply" style={sx.navCta}>Apply Now</a>
+          )}
+        </div>
       </nav>
 
       {/* ─── HERO ─── */}
@@ -189,20 +291,23 @@ export default function CreatorLanding() {
         <FadeIn>
           <div style={sx.spotsBadge}>
             <span style={sx.spotsDot} />
-            <span>{SPOTS_REMAINING} of {SPOTS_TOTAL} founding creator spots remaining</span>
+            <span>Founding 50 &mdash; {SPOTS_REMAINING} spots remaining</span>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.06}>
           <h1 style={sx.heroH1}>
-            Keep <span style={sx.heroAccent}>90%</span> of<br />what you earn.
+            Turn Your Influence into an
+            <br />
+            <span style={sx.heroAccent}>Automated Fitness Empire.</span>
           </h1>
         </FadeIn>
 
         <FadeIn delay={0.14}>
           <p style={sx.heroSub}>
-            Sell meal plans, workout programmes, and custom 1:1 plans — without
-            giving 30% to a platform that doesn't know your audience.
+            Sell meal plans, workout programmes, and custom 1:1 plans to your
+            audience. Plana handles delivery, grocery lists, calendar sync — you
+            focus on creating. First 50 creators lock in 10% platform fees for life.
           </p>
         </FadeIn>
 
@@ -212,26 +317,39 @@ export default function CreatorLanding() {
           </div>
         </FadeIn>
 
-        {/* spots visualiser */}
+        {/* Founding 50 badge section */}
         <FadeIn delay={0.3}>
-          <div style={sx.spotsVis}>
-            {Array.from({ length: SPOTS_TOTAL }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  ...sx.spotBlock,
-                  background: i < filledSpots ? ACCENT : 'rgba(255,255,255,.06)',
-                  borderColor: i < filledSpots ? ACCENT : 'rgba(255,255,255,.08)',
-                }}
-              >
-                {i < filledSpots && <span style={sx.spotFilled}>&#10003;</span>}
-              </div>
-            ))}
+          <div style={sx.founding50}>
+            <div style={sx.founding50Badge}>
+              <span style={sx.founding50Icon}>&#9733;</span>
+              <span style={sx.founding50Title}>Founding 50</span>
+            </div>
+            <p style={sx.founding50Desc}>
+              First 50 creators lock in <strong style={{ color: '#fff' }}>10% platform fees for life</strong>.
+              No catches. No time limits. Even when standard pricing goes higher.
+            </p>
+            <div style={sx.spotsVis}>
+              {Array.from({ length: 10 }).map((_, i) => {
+                const filledInGroup = Math.ceil((SPOTS_CLAIMED / SPOTS_TOTAL) * 10);
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      ...sx.spotBlock,
+                      background: i < filledInGroup ? CTA : 'rgba(255,255,255,.06)',
+                      borderColor: i < filledInGroup ? CTA : 'rgba(255,255,255,.08)',
+                    }}
+                  >
+                    {i < filledInGroup && <span style={sx.spotFilled}>&#10003;</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <p style={sx.spotsCaption}>
+              <span style={{ color: CTA, fontWeight: 700 }}>{SPOTS_CLAIMED} claimed</span>
+              {' '}&middot; {SPOTS_REMAINING} remaining at 10% forever
+            </p>
           </div>
-          <p style={sx.spotsCaption}>
-            <span style={{ color: ACCENT, fontWeight: 700 }}>{filledSpots} claimed</span>
-            {' '}&middot; {SPOTS_REMAINING} remaining at 10% forever
-          </p>
         </FadeIn>
       </section>
 
@@ -247,7 +365,7 @@ export default function CreatorLanding() {
             <FeeBar platform="Other platforms" earned={1000} fee={300} keep={700} bad />
           </FadeIn>
           <FadeIn delay={0.15}>
-            <FeeBar platform="Plana" earned={1000} fee={100} keep={900} />
+            <FeeBar platform="Plana (Founding 50)" earned={1000} fee={100} keep={900} />
           </FadeIn>
         </div>
 
@@ -255,7 +373,7 @@ export default function CreatorLanding() {
           <div style={sx.feeLockBanner}>
             <span style={sx.feeLockIcon}>&#8734;</span>
             <p style={sx.feeLockText}>
-              Founding creators lock in <strong style={{ color: '#fff' }}>10% forever</strong> — even if pricing changes later.
+              Founding 50 creators lock in <strong style={{ color: '#fff' }}>10% forever</strong> — even when standard pricing goes higher.
             </p>
           </div>
         </FadeIn>
@@ -265,7 +383,7 @@ export default function CreatorLanding() {
       <section style={sx.section}>
         <FadeIn>
           <p style={sx.sectionLabel}>Revenue streams</p>
-          <h2 style={sx.sectionH2}>Three ways to monetise your audience</h2>
+          <h2 style={sx.sectionH2}>Three ways to scale your revenue</h2>
         </FadeIn>
 
         <div style={sx.planGrid}>
@@ -334,24 +452,24 @@ export default function CreatorLanding() {
         </div>
       </section>
 
-      {/* ─── EARNINGS CALCULATOR ─── */}
+      {/* ─── REVENUE CALCULATOR ─── */}
       <section style={sx.section}>
         <FadeIn>
-          <EarningsCalculator />
+          <RevenueCalculator />
         </FadeIn>
       </section>
 
       {/* ─── FOUNDING CREATOR PERKS ─── */}
       <section style={sx.section}>
         <FadeIn>
-          <p style={sx.sectionLabel}>Founding creators</p>
+          <p style={sx.sectionLabel}>Founding 50</p>
           <h2 style={sx.sectionH2}>Why join now?</h2>
         </FadeIn>
 
         <div style={sx.perksWrap}>
           <PerkItem delay={0.05}>
-            <strong style={{ color: '#fff' }}>10% platform fee locked in forever.</strong>{' '}
-            Standard pricing will be higher. Founding creators keep their rate no matter what.
+            <strong style={{ color: '#fff' }}>0% platform fee locked in forever.</strong>{' '}
+            Standard pricing will go higher. Founding 50 creators keep their 10% rate no matter what.
           </PerkItem>
           <PerkItem delay={0.1}>
             <strong style={{ color: '#fff' }}>Direct access to the founder.</strong>{' '}
@@ -373,12 +491,12 @@ export default function CreatorLanding() {
         <FadeIn>
           <div style={sx.ctaSpotsBadge}>
             <span style={sx.spotsDot} />
-            {SPOTS_REMAINING} spots left at 10%
+            {SPOTS_REMAINING} of 50 Founding spots left
           </div>
           <h2 style={sx.ctaH2}>
             Spots are limited.<br />
             Don't miss the founding<br />
-            creator rate<span style={{ color: ACCENT }}>.</span>
+            creator rate<span style={{ color: CTA }}>.</span>
           </h2>
           <CreatorForm source="creator" />
           <p style={sx.ctaSmall}>No contracts. No exclusivity. Cancel anytime.</p>
@@ -413,99 +531,29 @@ export default function CreatorLanding() {
           width: 22px;
           height: 22px;
           border-radius: 50%;
-          background: ${ACCENT};
+          background: ${CTA};
           cursor: pointer;
-          border: 3px solid #0A0A0A;
-          box-shadow: 0 0 0 2px rgba(0,255,135,.3);
+          border: 3px solid #0A0A0B;
+          box-shadow: 0 0 0 2px rgba(0,188,212,.3);
         }
         input[type=range]::-moz-range-thumb {
           width: 22px;
           height: 22px;
           border-radius: 50%;
-          background: ${ACCENT};
+          background: ${CTA};
           cursor: pointer;
-          border: 3px solid #0A0A0A;
-          box-shadow: 0 0 0 2px rgba(0,255,135,.3);
+          border: 3px solid #0A0A0B;
+          box-shadow: 0 0 0 2px rgba(0,188,212,.3);
         }
       `}</style>
     </div>
   );
 }
 
-/* ──────────── earnings calculator ──────────── */
-function EarningsCalculator() {
-  const [plans, setPlans] = useState(50);
-  const [price, setPrice] = useState(40);
-  const gross = plans * price;
-  const planaFee = Math.round(gross * 0.1);
-  const otherFee = Math.round(gross * 0.3);
-  const planaNet = gross - planaFee;
-  const otherNet = gross - otherFee;
-  const saved = planaNet - otherNet;
-
-  return (
-    <div style={sx.calcWrap}>
-      <p style={sx.sectionLabel}>Your earnings</p>
-      <h2 style={{ ...sx.sectionH2, textAlign: 'center' }}>See what you'd keep on Plana</h2>
-
-      <div style={sx.calcSliders}>
-        <div style={sx.calcSliderGroup}>
-          <div style={sx.calcSliderLabel}>
-            <span>Plans sold per month</span>
-            <span style={sx.calcSliderValue}>{plans}</span>
-          </div>
-          <input
-            type="range"
-            min={5}
-            max={500}
-            step={5}
-            value={plans}
-            onChange={(e) => setPlans(Number(e.target.value))}
-          />
-        </div>
-        <div style={sx.calcSliderGroup}>
-          <div style={sx.calcSliderLabel}>
-            <span>Average price per plan</span>
-            <span style={sx.calcSliderValue}>${price}</span>
-          </div>
-          <input
-            type="range"
-            min={10}
-            max={200}
-            step={5}
-            value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
-          />
-        </div>
-      </div>
-
-      <div style={sx.calcResults}>
-        <div style={sx.calcResultCard}>
-          <span style={sx.calcResultLabel}>On other platforms (30%)</span>
-          <span style={{ ...sx.calcResultAmount, color: 'rgba(255,255,255,.4)' }}>
-            ${otherNet.toLocaleString()}<span style={sx.calcResultPeriod}>/mo</span>
-          </span>
-        </div>
-        <div style={{ ...sx.calcResultCard, borderColor: 'rgba(0,255,135,.2)' }}>
-          <span style={{ ...sx.calcResultLabel, color: ACCENT }}>On Plana (10%)</span>
-          <span style={{ ...sx.calcResultAmount, color: ACCENT }}>
-            ${planaNet.toLocaleString()}<span style={sx.calcResultPeriod}>/mo</span>
-          </span>
-        </div>
-      </div>
-
-      <div style={sx.calcSaved}>
-        <span style={sx.calcSavedLabel}>Extra in your pocket each month</span>
-        <span style={sx.calcSavedAmount}>+${saved.toLocaleString()}</span>
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════════ STYLES ═══════════════════════ */
-const ACCENT = '#00FF87';
-const BG = '#0A0A0A';
-const CARD_BG = '#111111';
+const CTA = '#00BCD4';
+const BG = '#0A0A0B';
+const CARD_BG = '#111112';
 const BORDER = 'rgba(255,255,255,.06)';
 const MAX_W = 1120;
 
@@ -521,13 +569,18 @@ const sx = {
   },
   logo: { fontWeight: 800, fontSize: 22, letterSpacing: '-0.04em', color: '#fff' },
   logoTag: {
-    fontSize: 12, fontWeight: 600, color: ACCENT,
-    background: 'rgba(0,255,135,.1)', border: '1px solid rgba(0,255,135,.15)',
+    fontSize: 12, fontWeight: 600, color: CTA,
+    background: 'rgba(0,188,212,.1)', border: '1px solid rgba(0,188,212,.2)',
     borderRadius: 4, padding: '2px 6px', marginLeft: 6, verticalAlign: 'middle',
     letterSpacing: '0.04em', textTransform: 'uppercase',
   },
+  navLinks: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 24,
+  },
   navCta: {
-    fontSize: 14, fontWeight: 600, color: BG, background: ACCENT,
+    fontSize: 14, fontWeight: 600, color: '#fff', background: CTA,
     padding: '8px 20px', borderRadius: 99, textDecoration: 'none',
   },
 
@@ -538,40 +591,77 @@ const sx = {
     maxWidth: MAX_W, margin: '0 auto',
   },
   heroH1: {
-    fontSize: 'clamp(36px, 6.5vw, 76px)', fontWeight: 800,
-    lineHeight: 1.05, letterSpacing: '-0.04em', margin: '0 0 28px',
+    fontSize: 'clamp(34px, 6vw, 72px)', fontWeight: 800,
+    lineHeight: 1.06, letterSpacing: '-0.04em', margin: '0 0 28px',
   },
-  heroAccent: { color: ACCENT },
+  heroAccent: { color: CTA },
   heroSub: {
     fontSize: 'clamp(15px, 2vw, 18px)', color: 'rgba(255,255,255,.5)',
-    maxWidth: 520, margin: '0 0 40px', lineHeight: 1.7,
+    maxWidth: 560, margin: '0 0 40px', lineHeight: 1.7,
   },
 
   /* spots badge */
   spotsBadge: {
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    fontSize: 13, fontWeight: 600, color: ACCENT,
-    background: 'rgba(0,255,135,.06)', border: '1px solid rgba(0,255,135,.15)',
+    fontSize: 13, fontWeight: 600, color: CTA,
+    background: 'rgba(0,188,212,.06)', border: '1px solid rgba(0,188,212,.2)',
     borderRadius: 99, padding: '7px 18px', marginBottom: 32,
     letterSpacing: '0.01em',
   },
   spotsDot: {
-    width: 7, height: 7, borderRadius: '50%', background: ACCENT,
+    width: 7, height: 7, borderRadius: '50%', background: CTA,
     display: 'inline-block', animation: 'plana-pulse 2s ease-in-out infinite',
+  },
+
+  /* founding 50 section */
+  founding50: {
+    marginTop: 48,
+    background: CARD_BG,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 20,
+    padding: 'clamp(28px, 4vw, 48px)',
+    textAlign: 'center',
+    maxWidth: 520,
+  },
+  founding50Badge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    background: 'rgba(0,188,212,.08)',
+    border: '1px solid rgba(0,188,212,.2)',
+    borderRadius: 99,
+    padding: '6px 16px',
+    marginBottom: 16,
+  },
+  founding50Icon: {
+    fontSize: 16,
+    color: CTA,
+  },
+  founding50Title: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: CTA,
+    letterSpacing: '0.02em',
+  },
+  founding50Desc: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,.5)',
+    lineHeight: 1.7,
+    marginBottom: 24,
   },
 
   /* spots visualiser */
   spotsVis: {
-    display: 'flex', gap: 8, justifyContent: 'center',
-    marginTop: 48, flexWrap: 'wrap',
+    display: 'flex', gap: 6, justifyContent: 'center',
+    flexWrap: 'wrap',
   },
   spotBlock: {
-    width: 40, height: 40, borderRadius: 8,
+    width: 36, height: 36, borderRadius: 8,
     border: '1px solid rgba(255,255,255,.08)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     transition: 'all .3s',
   },
-  spotFilled: { color: BG, fontSize: 14, fontWeight: 700 },
+  spotFilled: { color: BG, fontSize: 13, fontWeight: 700 },
   spotsCaption: {
     fontSize: 13, color: 'rgba(255,255,255,.35)',
     textAlign: 'center', marginTop: 12,
@@ -581,7 +671,7 @@ const sx = {
   section: { maxWidth: MAX_W, margin: '0 auto', padding: '100px clamp(20px, 5vw, 48px)' },
   sectionLabel: {
     fontSize: 13, fontWeight: 700, textTransform: 'uppercase',
-    letterSpacing: '0.12em', color: ACCENT, marginBottom: 12, textAlign: 'center',
+    letterSpacing: '0.12em', color: CTA, marginBottom: 12, textAlign: 'center',
   },
   sectionH2: {
     fontSize: 'clamp(26px, 4.2vw, 44px)', fontWeight: 800,
@@ -615,11 +705,11 @@ const sx = {
   feeLockBanner: {
     display: 'flex', alignItems: 'center', gap: 16,
     marginTop: 32, padding: '20px 28px', borderRadius: 14,
-    background: 'rgba(0,255,135,.04)', border: '1px solid rgba(0,255,135,.1)',
+    background: 'rgba(0,188,212,.04)', border: '1px solid rgba(0,188,212,.12)',
   },
   feeLockIcon: {
-    fontSize: 28, color: ACCENT, flexShrink: 0, width: 44, height: 44,
-    borderRadius: '50%', background: 'rgba(0,255,135,.1)',
+    fontSize: 28, color: CTA, flexShrink: 0, width: 44, height: 44,
+    borderRadius: '50%', background: 'rgba(0,188,212,.1)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   feeLockText: { fontSize: 15, color: 'rgba(255,255,255,.55)', lineHeight: 1.6 },
@@ -635,9 +725,9 @@ const sx = {
     height: '100%',
   },
   planIcon: {
-    fontSize: 24, color: ACCENT, marginBottom: 16,
+    fontSize: 24, color: CTA, marginBottom: 16,
     width: 44, height: 44, borderRadius: 12,
-    background: 'rgba(0,255,135,.08)', border: '1px solid rgba(0,255,135,.12)',
+    background: 'rgba(0,188,212,.08)', border: '1px solid rgba(0,188,212,.15)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
   planTitle: {
@@ -646,10 +736,10 @@ const sx = {
   },
   planDesc: { fontSize: 15, color: 'rgba(255,255,255,.5)', lineHeight: 1.7, marginBottom: 20, flex: 1 },
   planDetailBar: {
-    background: 'rgba(0,255,135,.04)', border: '1px solid rgba(0,255,135,.08)',
+    background: 'rgba(0,188,212,.04)', border: '1px solid rgba(0,188,212,.1)',
     borderRadius: 8, padding: '10px 14px',
   },
-  planDetailText: { fontSize: 13, fontWeight: 600, color: ACCENT, letterSpacing: '0.01em' },
+  planDetailText: { fontSize: 13, fontWeight: 600, color: CTA, letterSpacing: '0.01em' },
 
   /* smart features */
   featuresGrid: {
@@ -661,12 +751,12 @@ const sx = {
     padding: 'clamp(20px, 2.5vw, 28px)',
   },
   featureDot: {
-    width: 8, height: 8, borderRadius: '50%', background: ACCENT, marginBottom: 16,
+    width: 8, height: 8, borderRadius: '50%', background: CTA, marginBottom: 16,
   },
   featureTitle: { fontSize: 17, fontWeight: 700, marginBottom: 8 },
   featureDesc: { fontSize: 14, color: 'rgba(255,255,255,.45)', lineHeight: 1.7 },
 
-  /* earnings calculator */
+  /* revenue calculator */
   calcWrap: {
     background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20,
     padding: 'clamp(28px, 4vw, 56px)', textAlign: 'center',
@@ -684,31 +774,29 @@ const sx = {
     fontFamily: "'JetBrains Mono', monospace", fontWeight: 700,
     color: '#fff', fontSize: 15,
   },
-  calcResults: {
-    display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: 16, marginTop: 36,
-  },
-  calcResultCard: {
-    border: `1px solid ${BORDER}`, borderRadius: 12,
-    padding: '20px 24px', textAlign: 'center',
+  calcResultBlock: {
+    marginTop: 40,
+    background: 'rgba(0,188,212,.04)',
+    border: '1px solid rgba(0,188,212,.15)',
+    borderRadius: 16,
+    padding: 'clamp(24px, 3vw, 36px)',
+    maxWidth: 480,
+    margin: '40px auto 0',
+    textAlign: 'center',
   },
   calcResultLabel: {
     fontSize: 13, fontWeight: 600, textTransform: 'uppercase',
     letterSpacing: '0.06em', color: 'rgba(255,255,255,.35)',
-    display: 'block', marginBottom: 8,
+    display: 'block', marginBottom: 12,
   },
-  calcResultAmount: { fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em' },
-  calcResultPeriod: { fontSize: 16, fontWeight: 500, opacity: 0.5 },
-  calcSaved: {
-    marginTop: 24, padding: '16px 24px', borderRadius: 12,
-    background: 'rgba(0,255,135,.06)', border: '1px solid rgba(0,255,135,.12)',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    maxWidth: 480, margin: '24px auto 0', flexWrap: 'wrap', gap: 8,
-  },
-  calcSavedLabel: { fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.55)' },
-  calcSavedAmount: {
-    fontSize: 24, fontWeight: 800, color: ACCENT, letterSpacing: '-0.02em',
+  calcResultAmount: {
+    fontSize: 'clamp(36px, 5vw, 52px)', fontWeight: 800, letterSpacing: '-0.03em',
+    color: CTA, display: 'block',
     fontFamily: "'JetBrains Mono', monospace",
+  },
+  calcResultPeriod: { fontSize: 18, fontWeight: 500, opacity: 0.5 },
+  calcResultSub: {
+    fontSize: 13, color: 'rgba(255,255,255,.3)', marginTop: 8, display: 'block',
   },
 
   /* perks */
@@ -722,7 +810,7 @@ const sx = {
   },
   perkCheck: {
     width: 28, height: 28, borderRadius: '50%',
-    background: 'rgba(0,255,135,.1)', color: ACCENT,
+    background: 'rgba(0,188,212,.1)', color: CTA,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 14, fontWeight: 700, flexShrink: 0, marginTop: 2,
   },
@@ -736,8 +824,8 @@ const sx = {
   },
   ctaSpotsBadge: {
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    fontSize: 13, fontWeight: 600, color: ACCENT,
-    background: 'rgba(0,255,135,.06)', border: '1px solid rgba(0,255,135,.15)',
+    fontSize: 13, fontWeight: 600, color: CTA,
+    background: 'rgba(0,188,212,.06)', border: '1px solid rgba(0,188,212,.2)',
     borderRadius: 99, padding: '7px 18px', marginBottom: 28,
   },
   ctaH2: {
@@ -747,35 +835,39 @@ const sx = {
   ctaSmall: { fontSize: 13, color: 'rgba(255,255,255,.25)', marginTop: 20 },
 
   /* form */
-  form: { width: '100%', maxWidth: 500, margin: '0 auto' },
+  form: { width: '100%', maxWidth: 480, margin: '0 auto' },
+  formFields: {
+    display: 'flex', flexDirection: 'column', gap: 10,
+    marginBottom: 12,
+  },
   inputWrap: {
-    display: 'flex', gap: 0, background: CARD_BG, borderRadius: 12,
+    display: 'flex', background: CARD_BG, borderRadius: 12,
     border: `1px solid ${BORDER}`, overflow: 'hidden', padding: 4,
     transition: 'border-color .2s',
   },
   input: {
     flex: 1, background: 'transparent', border: 'none', outline: 'none',
     color: '#FAFAFA', fontSize: 15, padding: '14px 16px',
-    fontFamily: 'inherit', minWidth: 0,
+    fontFamily: 'inherit', minWidth: 0, width: '100%',
   },
   btn: {
-    background: ACCENT, color: BG, border: 'none', borderRadius: 10,
-    padding: '14px 24px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+    background: CTA, color: '#fff', border: 'none', borderRadius: 12,
+    padding: '16px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
     fontFamily: 'inherit', whiteSpace: 'nowrap', transition: 'opacity .2s',
-    flexShrink: 0,
+    width: '100%',
   },
   errorText: { color: '#FF6B6B', fontSize: 13, marginTop: 10 },
   successWrap: {
     display: 'flex', alignItems: 'center', gap: 12,
-    background: 'rgba(0,255,135,.06)', border: '1px solid rgba(0,255,135,.2)',
+    background: 'rgba(0,188,212,.06)', border: '1px solid rgba(0,188,212,.2)',
     borderRadius: 12, padding: '16px 24px', maxWidth: 500, margin: '0 auto',
   },
   successCheck: {
-    width: 28, height: 28, borderRadius: '50%', background: ACCENT,
-    color: BG, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    width: 28, height: 28, borderRadius: '50%', background: CTA,
+    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontWeight: 700, fontSize: 16, flexShrink: 0,
   },
-  successText: { color: ACCENT, fontSize: 15, fontWeight: 600, textAlign: 'left' },
+  successText: { color: CTA, fontSize: 15, fontWeight: 600, textAlign: 'left' },
 
   /* footer */
   footer: {
